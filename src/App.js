@@ -1,25 +1,36 @@
-import logo from './logo.svg';
-import './App.css';
+import { useState } from "react";
+import { io } from "socket.io-client";
 
-function App() {
-  return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
-  );
-}
+const socket = io("ws://localhost:50000");
+
+const App = () => {
+	const [serverMessage, setServerMessage] = useState(null);
+	const [messages, setMessages] = useState([]);
+	const [listening, setListening] = useState(false);
+
+	socket.on("from-server", (message) => {
+        if (message.end) setListening(false);
+		setMessages([...messages, message]);
+	});
+
+	const sendToServer = () => {
+		setListening(true);
+		socket.emit("to-server", "hello");
+	};
+
+	return (
+		<div className="App">
+            <h3>listening statues: {JSON.stringify(listening)}</h3>
+			<button onClick={sendToServer} disabled={!!listening}>Listen</button>
+            <h3>Results</h3>
+			<ul>
+				{messages.map((message, ind) => {
+					if (message.end) return <p>========================</p>
+					return <li>{JSON.stringify(message)}</li>;
+				})}
+			</ul>
+		</div>
+	);
+};
 
 export default App;
